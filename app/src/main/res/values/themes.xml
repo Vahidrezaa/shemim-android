@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- قاب پنجره قبل از رسم Compose — هم‌رنگ پس‌زمینهٔ آیکون تا اسپلش یکدست باشد -->
+    <style name="Theme.Shemim" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

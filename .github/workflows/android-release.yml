@@ -1,0 +1,69 @@
+name: Android Release Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Release (Signed)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # اگر Secretها ست شده باشند keystore واقعی امضا می‌کند؛
+      # وگرنه Gradle خودش با کلید debug امضا می‌کند تا بیلد نشکند (سند ۰۶ §۳).
+      - name: Decode keystore (optional)
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KS_KEYPASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            printf '%s' "$KS_B64" | base64 -d > "$RUNNER_TEMP/shemim-release.keystore"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/shemim-release.keystore" >> "$GITHUB_ENV"
+            echo "KEYSTORE_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=$KS_ALIAS" >> "$GITHUB_ENV"
+            echo "KEY_PASSWORD=$KS_KEYPASS" >> "$GITHUB_ENV"
+          else
+            echo "KEYSTORE_BASE64 is not set — release will be signed with the debug key."
+          fi
+
+      - name: Build release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --stacktrace -PversionCode=${{ github.run_number }}
+
+      - name: Rename APK
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_REF_TYPE" != "tag" ]; then VERSION="manual-${{ github.run_number }}"; fi
+          mv app/build/outputs/apk/release/app-release.apk "Shemim-$VERSION.apk"
+          echo "APK_NAME=Shemim-$VERSION.apk" >> "$GITHUB_ENV"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_NAME }}
+          if-no-files-found: error
+
+      - name: Create GitHub Release (only on tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "$APK_NAME" --title "شمیم $GITHUB_REF_NAME" --generate-notes

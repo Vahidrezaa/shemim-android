@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">شمیم</string>
+    <string name="fund_full_name">صندوق قرض‌الحسنه امیرالمؤمنین(ع)</string>
+    <string name="skeleton_phase_label">فاز صفر — اسکلت پروژه</string>
+    <string name="skeleton_body">این نسخه فقط ساختار پروژه است؛ اتصال به صندوق در فازهای بعدی اضافه می‌شود.</string>
+    <string name="skeleton_version">نسخهٔ %1$s (بیلد %2$s)</string>
+    <string name="skeleton_modules">ماژول‌ها: ۸ هسته + ۲۵ ویژگی آمادهٔ توسعه</string>
+</resources>

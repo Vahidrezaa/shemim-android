@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+**/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+.kotlin/
+
+# فایل‌های محلی — هرگز کامیت نشود
+local.properties
+
+# کلیدهای امضا (keystore فقط در GitHub Secrets زندگی می‌کند — سند ۰۶)
+*.jks
+*.keystore
+
+# سیستم‌عامل
+.DS_Store

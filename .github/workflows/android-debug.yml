@@ -1,0 +1,39 @@
+name: Android Debug Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Test (Debug)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK + unit tests + lint
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :app:lintDebug test --stacktrace -PversionCode=${{ github.run_number }}
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/debug/app-debug.apk Shemim-debug-${{ github.run_number }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shemim-debug-${{ github.run_number }}
+          path: Shemim-debug-${{ github.run_number }}.apk
+          if-no-files-found: error
