@@ -2,8 +2,46 @@
 <resources>
     <string name="app_name">شمیم</string>
     <string name="fund_full_name">صندوق قرض‌الحسنه امیرالمؤمنین(ع)</string>
-    <string name="skeleton_phase_label">فاز صفر — اسکلت پروژه</string>
-    <string name="skeleton_body">این نسخه فقط ساختار پروژه است؛ اتصال به صندوق در فازهای بعدی اضافه می‌شود.</string>
     <string name="skeleton_version">نسخهٔ %1$s (بیلد %2$s)</string>
-    <string name="skeleton_modules">ماژول‌ها: ۸ هسته + ۲۵ ویژگی آمادهٔ توسعه</string>
+
+    <!-- صفحهٔ نمایش سیستم طراحی (WP-0.2 + WP-0.6) -->
+    <string name="showcase_subtitle">نمایش سیستم طراحی و ابزارهای فارسی</string>
+    <string name="showcase_themes_title">تم‌ها</string>
+    <string name="showcase_themes_hint">همان ده تم سایت؛ انتخاب شما در اپ ذخیره می‌شود و بعد از ورود، با انتخاب تم شما در وب یکی می‌شود.</string>
+    <string name="showcase_display_title">حالت نمایش</string>
+    <string name="dark_mode_system">همراه سیستم</string>
+    <string name="dark_mode_light">روشن</string>
+    <string name="dark_mode_dark">تیره</string>
+    <string name="dynamic_color_title">رنگ پویای اندروید</string>
+    <string name="dynamic_color_hint">اگر روشن کنید، رنگ‌ها از کاغذدیواری گوشی می‌آیند (فقط اندروید ۱۲ به بالا).</string>
+    <string name="showcase_components_title">کامپوننت‌های پایه</string>
+    <string name="sample_card_title">کارت سند مالی</string>
+    <string name="sample_card_balance">موجودی حساب سپرده</string>
+    <string name="sample_amounts_title">مبالغ جهت‌دار (اعداد ستونی)</string>
+    <string name="amount_deposit">واریز قسط</string>
+    <string name="amount_withdraw">برداشت</string>
+    <string name="sample_members_title">اعضا</string>
+    <string name="sample_members_hint">رنگ هر عضو از رنگ‌های کاشیِ تم فعال و شناسهٔ عضو می‌آید.</string>
+    <string name="sample_empty_title">هنوز چیزی اینجا نیست</string>
+    <string name="sample_empty_message">به‌محض ثبت اولین داده، همین‌جا نمایش داده می‌شود.</string>
+    <string name="status_active">فعال</string>
+    <string name="status_overdue">معوق</string>
+    <string name="status_pending">در انتظار</string>
+    <string name="status_rejected">رد شده</string>
+    <string name="showcase_calendar_title">تقویم شمسی</string>
+    <string name="calendar_today_full">امروز</string>
+    <string name="calendar_today_short">قالب کوتاه</string>
+    <string name="calendar_month_days">طول ماه جاری</string>
+    <string name="calendar_month_days_value">%1$s: %2$s روز</string>
+    <string name="calendar_year_type">سال جاری</string>
+    <string name="calendar_year_leap">کبیسه (اسفند ۳۰ روزه)</string>
+    <string name="calendar_year_normal">معمولی (اسفند ۲۹ روزه)</string>
+    <string name="showcase_money_title">مبالغ و واحد پول</string>
+    <string name="money_unit_toggle">نمایش به تومان (به‌جای ریال)</string>
+    <string name="money_amount_rial">مبلغ نمونه به ریال</string>
+    <string name="money_amount_display">همان مبلغ در واحد نمایشی</string>
+    <string name="money_input_parse">تجزیهٔ ورودی کاربر</string>
+    <string name="money_input_parse_value">%1$s ← %2$s</string>
+    <string name="money_words">به حروف: %1$s %2$s</string>
+    <string name="showcase_footer">این صفحهٔ موقتِ فاز صفر است؛ اتصال به صندوق از WP-0.3 شروع می‌شود.</string>
 </resources>
