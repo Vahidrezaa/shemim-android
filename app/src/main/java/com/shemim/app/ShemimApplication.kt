@@ -9,13 +9,12 @@ import com.shemim.core.network.PersistentCookieJar
 import com.shemim.core.network.ShemimApiClient
 
 /**
- * کلاس Application — WP-0.3 (فیکس فریز).
+ * کلاس Application — WP-0.3.
  *
  * تا معرفی DI در WP-0.5، وابستگی‌های سطح پردازه اینجا ساخته می‌شوند:
- * «یک نمونه به‌ازای کل عمر پردازه»، نه به‌ازای هر Composition اکتیویتی.
- * ساخت در Composition دو مشکل داشت:
- *  ۱) با هر چرخش/بازسازی اکتیویتی، OkHttpClient و CookieJar از نو ساخته می‌شد؛
- *  ۲) بازیابی کوکی (عملیات AndroidKeyStore) می‌توانست روی ترد اصلی بیفتد.
+ * «یک نمونه به‌ازای کل عمر پردازه»، نه به‌ازای هر Composition اکتیویتی
+ * (ساخت در Composition با هر چرخش، OkHttpClient و CookieJar را از نو
+ * می‌ساخت و بازیابی کوکی (AndroidKeyStore) را روی ترد اصلی می‌آورد).
  */
 class ShemimApplication : Application() {
 
@@ -24,7 +23,7 @@ class ShemimApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         FreezeDiagnostics.install(this)
-        FreezeDiagnostics.shareReportIfNew(this)
+        FreezeDiagnostics.milestone("app-onCreate")
     }
 }
 

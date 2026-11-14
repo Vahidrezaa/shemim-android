@@ -18,9 +18,8 @@ import org.robolectric.annotation.Config
 
 /**
  * تست ران‌تایم کامل MainActivity روی JVM (Robolectric) — همان چرخهٔ
- * lifecycle/رندر/UI واقعی بدون گوشی. هدف: شکار «فریز صفحهٔ اول»
- * گزارش‌شده روی دستگاه (هر گیرِ composition، حلقهٔ بی‌نهایت یا
- * بلاکِ تردهای اصلی باید اینجا به‌صورت تایم‌اوت/کرش ظاهر شود).
+ * lifecycle/رندر/UI واقعی بدون گوشی. هر گیرِ composition، حلقهٔ بی‌نهایت
+ * یا بلاکِ تردهای اصلی باید اینجا به‌صورت تایم‌اوت/کرش ظاهر شود.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
@@ -77,11 +76,11 @@ class MainActivityLaunchTest {
         }
     }
 
-    /** عیب‌یابی بدون گزارش: هیچ کرشی/دیالوگی نباید باشد. */
+    /** عیب‌یابی بدون گزارش فریز/کرش: باید بی‌صدا و بی‌کرش no-op باشد. */
     @Test
-    fun shareReportIfNew_isSafe_withoutReportFile() {
+    fun onAppForeground_isSafe_withoutReport() {
         val ctx = androidx.test.core.app.ApplicationProvider
             .getApplicationContext<android.content.Context>()
-        FreezeDiagnostics.shareReportIfNew(ctx)
+        FreezeDiagnostics.onAppForeground(ctx)
     }
 }

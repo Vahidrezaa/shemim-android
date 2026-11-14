@@ -17,7 +17,7 @@
     <string name="home_logout_no">انصراف</string>
 
     <!-- عیب‌یابی فریز/کرش — WP-0.3 -->
-    <string name="diag_share_title">اشتراک گزارش عیب‌یابی</string>
+    <string name="diag_saved_toast">گزارش عیب‌یابی در Downloads ذخیره شد: %1$s</string>
 
     <!-- صفحهٔ نمایش سیستم طراحی (WP-0.2 + WP-0.6) -->
     <string name="showcase_subtitle">نمایش سیستم طراحی و ابزارهای فارسی</string>
