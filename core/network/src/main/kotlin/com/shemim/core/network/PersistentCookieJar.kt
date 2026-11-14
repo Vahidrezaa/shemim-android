@@ -17,6 +17,10 @@ import java.util.concurrent.ConcurrentHashMap
  *  - چرخش کوکی بعد از لاگین (`session_regenerate_id`) خودکار اعمال می‌شود:
  *    کلید نگهداری «دامنه + مسیر + نام» است، پس کوکی جدید جایگزین قبلی می‌شود.
  *  - کوکی منقضی (خروج سرور زمان انقضا را به گذشته ست می‌کند) حذف می‌شود.
+ *
+ * بازیابی از ذخیره‌گاه پایدار «تنبل» است: نه در سازنده (که می‌توانست روی
+ * ترد اصلی بیفتد)، بلکه در اولین فراخوانی OkHttp — که همیشه روی
+ * دیسپچر IO انجام می‌شود (withContext در ShemimApiClient.call).
  */
 class PersistentCookieJar(private val store: CookieStore) : CookieJar {
 
@@ -35,23 +39,34 @@ class PersistentCookieJar(private val store: CookieStore) : CookieJar {
     private val json = Json { ignoreUnknownKeys = true }
     private val cache = ConcurrentHashMap<String, Cookie>()
 
-    init {
-        // «اجرای بعدی اپ»: بازیابی از ذخیره‌گاه پایدار
-        store.load()?.let { persisted ->
-            runCatching {
-                json.decodeFromString(ListSerializer(StoredCookie.serializer()), persisted)
-            }.getOrNull()?.forEach { stored ->
-                if (stored.expiresAt > System.currentTimeMillis()) {
-                    cache[key(stored.domain, stored.path, stored.name)] = stored.toOkHttp()
+    @Volatile
+    private var restored = false
+
+    /** «اجرای بعدی اپ»: بازیابی یک‌باره از ذخیره‌گاه پایدار (اولین استفاده). */
+    private fun ensureRestored() {
+        if (restored) return
+        synchronized(this) {
+            if (restored) return
+            store.load()?.let { persisted ->
+                runCatching {
+                    json.decodeFromString(ListSerializer(StoredCookie.serializer()), persisted)
+                }.getOrNull()?.forEach { stored ->
+                    if (stored.expiresAt > System.currentTimeMillis()) {
+                        cache[key(stored.domain, stored.path, stored.name)] = stored.toOkHttp()
+                    }
                 }
             }
+            restored = true
         }
     }
 
-    override fun loadForRequest(url: HttpUrl): List<Cookie> =
-        cache.values.filter { it.matches(url) }
+    override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        ensureRestored()
+        return cache.values.filter { it.matches(url) }
+    }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        ensureRestored()
         if (cookies.isEmpty()) return
         val now = System.currentTimeMillis()
         for (cookie in cookies) {
@@ -68,6 +83,8 @@ class PersistentCookieJar(private val store: CookieStore) : CookieJar {
 
     /** پاک‌کردن همهٔ کوکی‌ها — بعد از logout یا auth_required. */
     fun clear() {
+        // اگر هنوز بازیابی نشده، دیگر نیازی نیست: فایل پاک می‌شود
+        restored = true
         cache.clear()
         store.clear()
     }

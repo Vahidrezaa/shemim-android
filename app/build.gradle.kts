@@ -49,6 +49,13 @@ android {
         }
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { test -> test.maxHeapSize = "2048m" }
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -84,5 +91,11 @@ dependencies {
     implementation(libs.androidx.compose.material.icons)
 
     testImplementation(libs.junit)
+
+    // ---------- تست ران‌تایم JVM (Robolectric): اجرای MainActivity بدون گوشی ----------
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.robolectric)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

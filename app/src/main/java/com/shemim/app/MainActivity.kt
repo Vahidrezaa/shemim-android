@@ -21,29 +21,26 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shemim.app.ui.HomePlaceholderScreen
 import com.shemim.app.ui.ThemeShowcaseScreen
-import com.shemim.core.datastore.SessionRepository
 import com.shemim.core.datastore.SessionState
 import com.shemim.core.datastore.ThemePrefs
-import com.shemim.core.datastore.ThemePrefsRepository
 import com.shemim.core.designsystem.theme.ShemimTheme
-import com.shemim.core.network.KeystoreCookieStore
-import com.shemim.core.network.PersistentCookieJar
-import com.shemim.core.network.ShemimApiClient
 import com.shemim.feature.auth.LoginScreen
 import com.shemim.feature.auth.LoginViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
-            // تا معرفی DI در WP-0.5 — ساخت دستی وابستگی‌ها (یک نمونه به‌ازای هر اجرا)
-            val appContext = applicationContext
-            val cookieJar = remember { PersistentCookieJar(KeystoreCookieStore(appContext)) }
-            val api = remember { ShemimApiClient(cookieJar = cookieJar) }
-            val sessionRepo = remember { SessionRepository(appContext) }
-            val themeRepo = remember { ThemePrefsRepository(appContext) }
+            // ظرف وابستگی‌های سطح پردازه — یک نمونه برای کل عمر اپ
+            // (ساخت در Composition با هر چرخش، OkHttpClient و CookieJar را
+            // از نو می‌ساخت و بازیابی کوکی (Keystore) را روی ترد اصلی می‌آورد)
+            val graph = (application as ShemimApplication).graph
+            val api = graph.api
+            val cookieJar = graph.cookieJar
+            val sessionRepo = graph.sessionRepo
+            val themeRepo = graph.themeRepo
             val scope = rememberCoroutineScope()
 
             val prefs by themeRepo.prefs.collectAsState(initial = ThemePrefs.Default)
@@ -97,12 +94,14 @@ class MainActivity : ComponentActivity() {
                                 user = s.user,
                                 onOpenThemes = { showThemes = true },
                                 onLogout = {
+                                    // فوری: نشست محلی پاک می‌شود تا UI همان لحظه به ورود
+                                    // برگردد (وگرنه در آفلاین تا ۱۵ ثانیه منتظر تایم‌اوت
+                                    // خروج سرور می‌ماند و «فریز» به نظر می‌رسید)
+                                    scope.launch { sessionRepo.clear() }
+                                    // بعد: خروج سمت سرور با کوکی فعلی، سپس پاک‌کردن کوکی
                                     scope.launch {
-                                        // مثل وب: logout سمت سرور (نتیجه‌اش مسیر را عوض نمی‌کند)
-                                        // سپس پاک‌کردن کامل محلی — حتی اگر آفلاین بودیم
                                         api.logout()
                                         cookieJar.clear()
-                                        sessionRepo.clear()
                                     }
                                 },
                             )
