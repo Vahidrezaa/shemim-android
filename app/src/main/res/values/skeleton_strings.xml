@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skeleton_phase_label" translatable="false">در حال بارگذاری…</string>
+    <string name="skeleton_body" translatable="false">محتوای صفحه در حال دریافت است</string>
+    <string name="skeleton_modules" translatable="false">فهرست بخش‌های برنامه</string>
+</resources>
