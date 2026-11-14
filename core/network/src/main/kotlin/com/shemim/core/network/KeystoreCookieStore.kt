@@ -27,20 +27,22 @@ class KeystoreCookieStore(context: Context) : CookieStore {
 
     private val file: File = File(context.filesDir, FILE_NAME)
 
-    override fun load(): String? = try {
-        if (!file.exists()) return null
-        val blob = file.readBytes()
-        if (blob.size <= IV_SIZE_BYTES) return null
-        val iv = blob.copyOfRange(0, IV_SIZE_BYTES)
-        val ciphertext = blob.copyOfRange(IV_SIZE_BYTES, blob.size)
-        val cipher = Cipher.getInstance(TRANSFORM)
-        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(TAG_BITS, iv))
-        String(cipher.doFinal(ciphertext), Charsets.UTF_8)
-    } catch (t: Throwable) {
-        // فقط نام کلاس خطا لاگ می‌شود؛ محتوای کوکی هرگز لاگ نمی‌شود (سند ۰۲ §۹)
-        Log.w(TAG, "session cookie unreadable, dropping (${t.javaClass.simpleName})")
-        runCatching { file.delete() }
-        null
+    override fun load(): String? {
+        return try {
+            if (!file.exists()) return null
+            val blob = file.readBytes()
+            if (blob.size <= IV_SIZE_BYTES) return null
+            val iv = blob.copyOfRange(0, IV_SIZE_BYTES)
+            val ciphertext = blob.copyOfRange(IV_SIZE_BYTES, blob.size)
+            val cipher = Cipher.getInstance(TRANSFORM)
+            cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(TAG_BITS, iv))
+            String(cipher.doFinal(ciphertext), Charsets.UTF_8)
+        } catch (t: Throwable) {
+            // فقط نام کلاس خطا لاگ می‌شود؛ محتوای کوکی هرگز لاگ نمی‌شود (سند ۰۲ §۹)
+            Log.w(TAG, "session cookie unreadable, dropping (${t.javaClass.simpleName})")
+            runCatching { file.delete() }
+            null
+        }
     }
 
     override fun save(json: String) {
