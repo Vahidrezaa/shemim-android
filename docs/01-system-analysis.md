@@ -26,8 +26,8 @@
 ## ۳. API — قرارداد ارتباطی
 
 - **آدرس:** `POST /api.php?action=<name>` با بدنهٔ JSON (برخی اکشن‌ها GET-پذیرند ولی الگوی ثابت POST است).
-- **احراز هویت:** Session PHP با کوکی `PHPSESSID`، عمر ۶۰ روز، `secure` روی HTTPS، `HttpOnly`. در لاگین موفق `session_regenerate_id` (چرخش کوکی — کلاینت باید CookieJar واقعی داشته باشد).
-- **گارد:** به‌جز `login`, `register`, `getTrialStatus`, `ping`, `getRegistrationStatus`, `pushLatest`, `savePushSubscription`, `removePushSubscription`, `getUserActivity`, `getMembersPresence`, `requestPasswordReset`, `validateResetToken`, `resetPassword`, `baleOtpRequest`, `baleOtpVerify` — بقیه بدون نشست معتبر خطای `auth_required` می‌گیرند (HTTP 200 با `success:false`).
+- **احراز هویت:** Session PHP با کوکی `PHPSESSID`؛ نشست‌ها در جدول `php_sessions` دیتابیس ذخیره می‌شوند (نه فایل موقت هاست — `config.php`) و عمر کوکی ۱۰ سال است؛ `secure` روی HTTPS، `HttpOnly`، `SameSite=Lax`. در لاگین موفق `session_regenerate_id` (چرخش کوکی — کلاینت باید CookieJar واقعی داشته باشد). *(اصلاح WP-0.3 پس از بازبینی مجدد `config.php`؛ پیش‌تر «۶۰ روز» نوشته شده بود.)*
+- **گارد:** به‌جز `login`, `register`, `getTrialStatus`, `getRegistrationStatus`, `pushLatest`, `requestPasswordReset`, `validateResetToken`, `resetPassword`, `baleOtpRequest`, `baleOtpVerify`, `downloadBackupFile` (`$publicNoAuthActions` در `config.php`) — بقیه بدون نشست معتبر خطای `auth_required` می‌گیرند (HTTP 200 با `success:false`). *(اکشن‌های `savePushSubscription` و `getUserActivity` و مشابه آن هم نشست می‌خواهند — اصلاح WP-0.3.)*
 - **قالب پاسخ:** همیشه `{success: bool, …}`؛ خطاها: `error` (متن فارسی) و گاهی `code` (مثل `too_many_attempts`).
 - **نسخه‌بندی داده:** هر اکشن نوشتنی `dataVersion` را دوبار bump می‌کند؛ `loadData` با `sinceVersion` اگر تغییری نبوده `unchanged:true` برمی‌گرداند.
 - **فشرده‌سازی:** gzip سمت سرور روی پاسخ‌های بزرگ (loadData می‌تواند چند مگابایت باشد → روی شبکه ~۱۰-۲۰٪).

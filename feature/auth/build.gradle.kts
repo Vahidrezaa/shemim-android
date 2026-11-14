@@ -1,8 +1,8 @@
-// feature:auth — login/register/reset/otp — فاز ۰-۱
-// اسکلت خالی؛ در WP مربوطه (سند ۰۰) پر می‌شود.
+// feature:auth — ورود/خروج — WP-0.3 (ثبت‌نام/بازیابی/OTP بله در فازهای بعدی طبق سند ۰۰)
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -21,4 +21,19 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    buildFeatures {
+        compose = true
+    }
+}
+
+dependencies {
+    implementation(project(":core:designsystem"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:network"))
+
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // آیکون‌های Visibility/Person/Lock (مجموعهٔ گسترده) — مانند designsystem
+    implementation(libs.androidx.compose.material.icons)
 }

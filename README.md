@@ -10,7 +10,7 @@
 
 | فاز | وضعیت |
 |---|---|
-| فاز ۰ — زیرساخت و اسکلت | 🟡 در حال اجرا (WP-0.1 و 0.8 ✅ سبز در Actions؛ WP-0.2 و 0.6 تحویل شد، منتظر Actions) |
+| فاز ۰ — زیرساخت و اسکلت | 🟡 در حال اجرا (WP-0.1، 0.2، 0.6 و 0.8 ✅ سبز در Actions؛ WP-0.3 تحویل شد، منتظر Actions) |
 | فاز ۱ تا ۶ | ⚪ شروع نشده |
 
 وضعیت لحظه‌ای همهٔ بسته‌های کاری: [`docs/04-feature-map.md`](docs/04-feature-map.md) (سند زنده).
@@ -20,15 +20,14 @@
 ```
 app/                  ← MainActivity، مونتاژ نهایی
 core/
-  common/             ← ابزارهای خالص Kotlin (ارقام فارسی، …) — JVM
-  designsystem/       ← ۱۰ تم سایت + Vazirmatn FD + کامپوننت‌های پایه (WP-0.2 ✅ تحویل)
-  common/             ← تقویم شمسی، مبالغ، ارقام فارسی (WP-0.6 ✅ تحویل — ۳۸ تست واحد)
+  common/             ← تقویم شمسی، مبالغ، ارقام فارسی، عدد به حروف (WP-0.6 ✅ — ۳۸ تست واحد)
+  designsystem/       ← ۱۰ تم سایت + Vazirmatn FD + کامپوننت‌های پایه (WP-0.2 ✅)
   model/              ← DTOهای appData (WP-0.4)
-  network/            ← Retrofit/OkHttp/CookieJar (WP-0.3)
+  network/            ← کلاینت API: OkHttp + CookieJar پایدار + مدیریت auth_required (WP-0.3 🟢 تحویل)
   db/                 ← Room (WP-0.4)
   sync/               ← SyncEngine + Outbox (WP-0.5)
-  datastore/          ← session/تنظیمات (WP-0.3)
-feature/              ← ۲۵ ماژول ویژگی (اسکلت خالی — هر کدام در فاز خودش پر می‌شود)
+  datastore/          ← تم (WP-0.2) + نشست کاربر (WP-0.3)
+feature/              ← ۲۵ ماژول ویژگی (feature:auth از WP-0.3 پر شده؛ بقیه در فاز خودشان)
 server/               ← فایل‌های PHP سمت هاست (فاز ۵ — سند ۰۵)
 docs/                 ← اسناد پروژه (۰۰ تا ۰۷)
 .github/workflows/    ← CI بیلد دیباگ + ریلیز امضاشده

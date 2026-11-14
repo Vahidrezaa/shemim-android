@@ -4,6 +4,18 @@
     <string name="fund_full_name">صندوق قرض‌الحسنه امیرالمؤمنین(ع)</string>
     <string name="skeleton_version">نسخهٔ %1$s (بیلد %2$s)</string>
 
+    <!-- خانهٔ موقت فاز ۰ — WP-0.3 -->
+    <string name="home_phase0_subtitle">نسخهٔ آزمایشی فاز صفر</string>
+    <string name="home_session_title">وضعیت نشست</string>
+    <string name="home_session_ok">ورود موفق؛ کوکی نشست به‌صورت رمزنگاری‌شده روی همین گوشی نگه داشته می‌شود و تا خروج شما معتبر می‌ماند.</string>
+    <string name="home_server">سرور: abcd.khaneh-soorati.ir</string>
+    <string name="home_actions_title">بخش‌های آزمایشی فاز ۰</string>
+    <string name="home_open_showcase">نمایش تم‌ها و ابزارها</string>
+    <string name="home_logout">خروج از حساب</string>
+    <string name="home_logout_confirm">خارج می‌شوید؟ نشست شما روی سرور پایان می‌یابد و باید دوباره وارد شوید.</string>
+    <string name="home_logout_yes">بله، خارج می‌شوم</string>
+    <string name="home_logout_no">انصراف</string>
+
     <!-- صفحهٔ نمایش سیستم طراحی (WP-0.2 + WP-0.6) -->
     <string name="showcase_subtitle">نمایش سیستم طراحی و ابزارهای فارسی</string>
     <string name="showcase_themes_title">تم‌ها</string>
