@@ -4,12 +4,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import android.content.Context
 import com.shemim.core.designsystem.theme.DarkModePreference
 import com.shemim.core.designsystem.theme.ShemimThemeKey
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 /**
@@ -44,14 +47,19 @@ class ThemePrefsRepository(private val context: Context) {
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
     }
 
-    val prefs: Flow<ThemePrefs> = context.themeDataStore.data.map { p ->
-        ThemePrefs(
-            themeKey = ShemimThemeKey.fromKey(p[Keys.THEME]),
-            darkMode = p[Keys.DARK_MODE]?.let { runCatching { DarkModePreference.valueOf(it) }.getOrNull() }
-                ?: ThemePrefs.Default.darkMode,
-            dynamicColor = p[Keys.DYNAMIC_COLOR] ?: false,
-        )
-    }
+    /** همان الگوی SessionRepository: خطای IO فایل → پیش‌فرض‌ها، نه مرگ جریان. */
+    val prefs: Flow<ThemePrefs> = context.themeDataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { p ->
+            ThemePrefs(
+                themeKey = ShemimThemeKey.fromKey(p[Keys.THEME]),
+                darkMode = p[Keys.DARK_MODE]?.let { runCatching { DarkModePreference.valueOf(it) }.getOrNull() }
+                    ?: ThemePrefs.Default.darkMode,
+                dynamicColor = p[Keys.DYNAMIC_COLOR] ?: false,
+            )
+        }
 
     /** ثبت انتخاب تم — هم‌ارز کاری که وب با updateMyTheme روی سرور می‌کند (sync در WP-1.7). */
     suspend fun setTheme(themeKey: ShemimThemeKey) {

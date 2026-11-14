@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 /**
@@ -58,22 +61,31 @@ class SessionRepository(private val context: Context) {
         val ROLE = stringPreferencesKey("user_role")
     }
 
-    val session: Flow<SessionState> = context.sessionDataStore.data.map { p ->
-        val id = p[Keys.ID]
-        if (id.isNullOrBlank()) {
-            SessionState.LoggedOut
-        } else {
-            SessionState.Active(
-                StoredUser(
-                    id = id,
-                    username = p[Keys.USERNAME] ?: "",
-                    firstName = p[Keys.FIRST_NAME]?.takeIf { it.isNotBlank() },
-                    lastName = p[Keys.LAST_NAME]?.takeIf { it.isNotBlank() },
-                    role = p[Keys.ROLE] ?: "user",
-                ),
-            )
+    /**
+     * خطای خواندن فایل DataStore (مثلاً خرابی پس از خاموشی ناگهانی) هرگز
+     * نباید جریان را بکشد و اپ را برای همیشه در Loading نگه دارد — الگوی
+     * رسمی DataStore: خطای IO → تنظیمات خالی = «وارد نشده».
+     */
+    val session: Flow<SessionState> = context.sessionDataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
         }
-    }
+        .map { p ->
+            val id = p[Keys.ID]
+            if (id.isNullOrBlank()) {
+                SessionState.LoggedOut
+            } else {
+                SessionState.Active(
+                    StoredUser(
+                        id = id,
+                        username = p[Keys.USERNAME] ?: "",
+                        firstName = p[Keys.FIRST_NAME]?.takeIf { it.isNotBlank() },
+                        lastName = p[Keys.LAST_NAME]?.takeIf { it.isNotBlank() },
+                        role = p[Keys.ROLE] ?: "user",
+                    ),
+                )
+            }
+        }
 
     suspend fun save(user: StoredUser) {
         context.sessionDataStore.edit {

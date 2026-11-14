@@ -1,13 +1,17 @@
 package com.shemim.app
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -19,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shemim.app.ui.HomePlaceholderScreen
 import com.shemim.app.ui.ThemeShowcaseScreen
@@ -28,9 +33,12 @@ import com.shemim.core.designsystem.theme.ShemimTheme
 import com.shemim.feature.auth.LoginScreen
 import com.shemim.feature.auth.LoginViewModel
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -38,10 +46,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             FreezeDiagnostics.milestone("composed")
 
-            // ظرف وابستگی‌های سطح پردازه — یک نمونه برای کل عمر اپ
+            // ظرف وابستگی‌های سطح پردازه — یک نمونه برای کل عمر اپ.
+            // api/cookieJar عمداً اینجا گرفته نمی‌شوند: زنجیرهٔ شبکه در
+            // ShemimApplication روی ترد IO گرم شده و فقط در لحظهٔ نیاز
+            // (فرم ورود/خروج) لمس می‌شود — composition هیچ چیزی نمی‌سازد.
             val graph = (application as ShemimApplication).graph
-            val api = graph.api
-            val cookieJar = graph.cookieJar
             val sessionRepo = graph.sessionRepo
             val themeRepo = graph.themeRepo
             val scope = rememberCoroutineScope()
@@ -50,9 +59,12 @@ class MainActivity : ComponentActivity() {
             val session by sessionRepo.session.collectAsState(initial = SessionState.Loading)
 
             // «auth_required» از هر فراخوانی → پاک‌شدن نشست محلی و برگشت به ورود
-            // (همان forceLogoutToLoginPage در auth-flow.js — سند ۰۲ §۳)
-            LaunchedEffect(api) {
-                api.authEvents.collect { sessionRepo.clear() }
+            // (همان forceLogoutToLoginPage در auth-flow.js — سند ۰۲ §۳).
+            // کل جمع‌آوری روی ترد IO — دست نزدن به ترد اصلی.
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.IO) {
+                    graph.api.authEvents.collect { sessionRepo.clear() }
+                }
             }
 
             var showThemes by remember { mutableStateOf(false) }
@@ -89,13 +101,24 @@ class MainActivity : ComponentActivity() {
 
                         is SessionState.LoggedOut -> {
                             val loginViewModel: LoginViewModel =
-                                viewModel { LoginViewModel(api, sessionRepo) }
+                                viewModel { LoginViewModel(graph.api, sessionRepo) }
                             val loginState by loginViewModel.state.collectAsState()
-                            LoginScreen(
-                                state = loginState,
-                                onLogin = loginViewModel::login,
-                                onConsumeError = loginViewModel::consumeError,
-                            )
+                            // نشانگر نسخه زیر صفحهٔ ورود — ردگیری اینکه کدام بیلد روی گوشی است
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                LoginScreen(
+                                    state = loginState,
+                                    onLogin = loginViewModel::login,
+                                    onConsumeError = loginViewModel::consumeError,
+                                )
+                                Text(
+                                    text = getString(R.string.skeleton_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString()),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .padding(bottom = 6.dp),
+                                )
+                            }
                         }
 
                         is SessionState.Active -> {
@@ -119,9 +142,10 @@ class MainActivity : ComponentActivity() {
                                         // خروج سرور می‌ماند و «فریز» به نظر می‌رسید)
                                         scope.launch { sessionRepo.clear() }
                                         // بعد: خروج سمت سرور با کوکی فعلی، سپس پاک‌کردن کوکی
-                                        scope.launch {
-                                            api.logout()
-                                            cookieJar.clear()
+                                        // (کل کار شبکه/فایل روی ترد IO)
+                                        scope.launch(Dispatchers.IO) {
+                                            graph.api.logout()
+                                            graph.cookieJar.clear()
                                         }
                                     },
                                 )
@@ -135,9 +159,23 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // اینجا اپ در پیش‌زمینه است: صادرات گزارشِ تازه به Downloads + اعلان
-        // (در Application.onCreate اندروید ۱۰+ اجازهٔ بازکردن UI نمی‌دهد)
+        // یک‌بار در هر اجرای پردازه: اعلام نسخه/بیلد — حتی اگر اپ فریز شود،
+        // Toast سیستمی رندر می‌شود و مشخص می‌شود کدام بیلد روی گوشی است
+        if (!toastShown) {
+            toastShown = true
+            Toast.makeText(
+                this,
+                getString(R.string.skeleton_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString()),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+        // صادرات گزارش تازهٔ فریز/کرش به Downloads (در پیش‌زمینه مجاز است)
         FreezeDiagnostics.onAppForeground(this)
+    }
+
+    companion object {
+        @Volatile
+        private var toastShown = false
     }
 }
 
