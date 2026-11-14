@@ -3,5 +3,21 @@
     <!-- قاب پنجره قبل از رسم Compose — هم‌رنگ پس‌زمینهٔ آیکون تا اسپلش یکدست باشد -->
     <style name="Theme.Shemim" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
+        <!-- بدون انیمیشن ورود/خروج پنجره — هیچ فریم میانی‌ای برای «گیرکردن در
+             میانهٔ محوشدن» باقی نمی‌ماند (شاهد بصری لاگ گوشی واقعی: پنجره با
+             آلفای ~۰.۱ رها شده بود) -->
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
+    <!--
+      تم راه‌اندازی رسمی — WP-0.3.
+      هنداف اسپلش را از starting-window سیستمی (که روی MIUI هنگام تعویض با
+      پنجرهٔ اپ، کانال ورودی‌اش را «کثیف» رها می‌کند) به مسیر مدیریت‌شدهٔ
+      کتابخانهٔ رسمی گوگل منتقل می‌کند. پس از آماده‌شدن اولین فریم اپ، تمِ
+      اصلی (Theme.Shemim) اعمال می‌شود.
+    -->
+    <style name="Theme.Shemim.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="postSplashScreenTheme">@style/Theme.Shemim</item>
     </style>
 </resources>

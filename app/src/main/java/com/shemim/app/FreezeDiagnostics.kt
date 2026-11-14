@@ -151,6 +151,9 @@ object FreezeDiagnostics {
         val file = reportFile()
         val mainThread = Looper.getMainLooper().thread
 
+        // در logcat هم دیده شود (فایل به‌تنهایی در logcat ظاهر نمی‌شود)
+        Log.w(TAG, "MAIN-THREAD STALL ${STALL_MS / 1000}s+ — exporting $EXPORT_NAME")
+
         // ابتدا استک همهٔ تردها؛ در سقف‌گیری «انتهای» فایل حفظ می‌شود،
         // پس استکِ خودِ ترد اصلی را آخر می‌نویسیم که قطعاً باقی بماند.
         append(

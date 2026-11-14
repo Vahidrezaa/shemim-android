@@ -1,7 +1,6 @@
 package com.shemim.app
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -23,7 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shemim.app.ui.HomePlaceholderScreen
 import com.shemim.app.ui.ThemeShowcaseScreen
@@ -40,6 +42,10 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // اسپلشِ مدیریت‌شدهٔ رسمی — الزاماً قبل از super.onCreate.
+        // هنداف اسپلش را از starting-window سیستمی (که لاگ MIUI نشان داد
+        // کانال ورودی‌اش «کثیف» رها می‌شود) به مسیر کتابخانهٔ رسمی می‌برد.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         FreezeDiagnostics.milestone("activity-onCreate")
@@ -90,6 +96,21 @@ class MainActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        // ردیابی لمس در سطح ریشه: اگر در فریزِ بعدی «pointer-Press»
+                        // در لاگ ثبت شد یعنی لمس به Compose رسیده (مشکل داخل اپ)؛
+                        // ثبت نشد یعنی مرگ ورودی سیستم‌ساید است.
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    if (event.type == PointerEventType.Press ||
+                                        event.type == PointerEventType.Release
+                                    ) {
+                                        FreezeDiagnostics.milestone("pointer-${event.type}")
+                                    }
+                                }
+                            }
+                        }
                         .drawBehind {
                             if (drewFirstFrame.compareAndSet(false, true)) {
                                 FreezeDiagnostics.milestone("first-frame-drawn")
@@ -159,23 +180,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // یک‌بار در هر اجرای پردازه: اعلام نسخه/بیلد — حتی اگر اپ فریز شود،
-        // Toast سیستمی رندر می‌شود و مشخص می‌شود کدام بیلد روی گوشی است
-        if (!toastShown) {
-            toastShown = true
-            Toast.makeText(
-                this,
-                getString(R.string.skeleton_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString()),
-                Toast.LENGTH_LONG,
-            ).show()
-        }
         // صادرات گزارش تازهٔ فریز/کرش به Downloads (در پیش‌زمینه مجاز است)
         FreezeDiagnostics.onAppForeground(this)
-    }
-
-    companion object {
-        @Volatile
-        private var toastShown = false
     }
 }
 
