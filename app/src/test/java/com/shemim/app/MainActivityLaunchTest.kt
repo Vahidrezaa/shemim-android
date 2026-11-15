@@ -1,5 +1,6 @@
 package com.shemim.app
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
@@ -53,13 +54,23 @@ class MainActivityLaunchTest {
     /** بدون نشست → دست‌به‌دست‌ شدن به LoginActivity (صفحهٔ ورود View-محور). */
     @Test
     fun loggedOut_handsOffToLoginActivity() {
-        val app = ApplicationProvider.getApplicationContext<Context>()
-        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+        // تایپ استاتیک باید Application باشد تا overload درستِ shadowOf رزولو شود
+        // (با Context، ShadowApplication و nextStartedActivity پیدا نمی‌شود).
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             var started: Intent? = null
             var attempts = 0
-            while (started == null && attempts < 50) {
+            // intent را هم از سایهٔ خود اکتیویتی می‌پرسیم (مسیر رسمی
+            // activity.startActivity) و هم از سایهٔ اپلیکیشن (مسیر
+            // context-level) — هر کدام زودتر ثبت شده باشد.
+            while (started == null && attempts < 100) {
                 shadowOf(Looper.getMainLooper()).idle()
-                started = shadowOf(app).nextStartedActivity
+                scenario.onActivity { activity ->
+                    if (started == null) {
+                        started = shadowOf(activity).nextStartedActivity
+                            ?: shadowOf(app).nextStartedActivity
+                    }
+                }
                 if (started == null) Thread.sleep(20)
                 attempts++
             }
