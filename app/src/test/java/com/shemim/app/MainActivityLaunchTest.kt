@@ -2,7 +2,6 @@ package com.shemim.app
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.os.Looper
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -54,30 +53,50 @@ class MainActivityLaunchTest {
     /** بدون نشست → دست‌به‌دست‌ شدن به LoginActivity (صفحهٔ ورود View-محور). */
     @Test
     fun loggedOut_handsOffToLoginActivity() {
-        // تایپ استاتیک باید Application باشد تا overload درستِ shadowOf رزولو شود
-        // (با Context، ShadowApplication و nextStartedActivity پیدا نمی‌شود).
+        // تایپ استاتیک باید Application باشد تا overload درستِ shadowOf رزولو شود.
         val app = ApplicationProvider.getApplicationContext<Application>()
+        // صف شروع‌های سطح اپ را پیش از launch خالی می‌کنیم؛ خودِ
+        // ActivityScenario هنگام راه‌اندازی MainActivity یک intent در صف ثبت
+        // می‌کند و نباید با intent دست‌به‌دست‌شدن اشتباه گرفته شود.
+        while (shadowOf(app).nextStartedActivity != null) {
+            // drain
+        }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            var started: Intent? = null
+            val milestones = File(app.filesDir, "milestones.log")
+            var handoff = false
+            var loginIntentSeen = false
             var attempts = 0
-            // intent را هم از سایهٔ خود اکتیویتی می‌پرسیم (مسیر رسمی
-            // activity.startActivity) و هم از سایهٔ اپلیکیشن (مسیر
-            // context-level) — هر کدام زودتر ثبت شده باشد.
-            while (started == null && attempts < 100) {
+            // دو شرط مستقل: (۱) milestone مسیر handoff در فایل ثبت شود و
+            // (۲) intent شروع LoginActivity در صف اکتیویتی یا اپ دیده شود.
+            // intentهای نامربوط (مثل راه‌اندازی خود سناریو) رد می‌شوند.
+            while (attempts < 250 && !(handoff && loginIntentSeen)) {
                 shadowOf(Looper.getMainLooper()).idle()
-                scenario.onActivity { activity ->
-                    if (started == null) {
-                        started = shadowOf(activity).nextStartedActivity
-                            ?: shadowOf(app).nextStartedActivity
+                if (!handoff) {
+                    handoff = runCatching { milestones.readText() }
+                        .getOrDefault("")
+                        .contains("MILESTONE handoff-to-login-activity")
+                }
+                if (!loginIntentSeen) {
+                    scenario.onActivity { activity ->
+                        repeat(10) {
+                            val next = shadowOf(activity).nextStartedActivity
+                                ?: shadowOf(app).nextStartedActivity
+                                ?: return@repeat
+                            if (next.component?.className ==
+                                LoginActivity::class.java.name
+                            ) {
+                                loginIntentSeen = true
+                            }
+                        }
                     }
                 }
-                if (started == null) Thread.sleep(20)
+                if (!(handoff && loginIntentSeen)) Thread.sleep(20)
                 attempts++
             }
-            assertTrue("MainActivity در حالت خروج، LoginActivity را باز نکرد", started != null)
+            assertTrue("مسیر دست‌به‌دست شدن اجرا نشد (milestone ثبت نشد)", handoff)
             assertTrue(
-                "اکتیویتی باز‌شده LoginActivity نبود: ${started?.component}",
-                started?.component?.className == LoginActivity::class.java.name,
+                "intent شروع LoginActivity در صف‌های اکتیویتی/اپ دیده نشد",
+                loginIntentSeen,
             )
         }
     }
