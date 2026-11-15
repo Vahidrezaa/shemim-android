@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -85,12 +85,19 @@ class LoginRenderDiagTest {
         return abs(dr) + abs(dg) + abs(db)
     }
 
-    /** (پیکسلِ primary، پیکسلِ outline، پیکسلِ غیرپس‌زمینه) روی کل تصویر. */
+    /** (پیکسلِ primary، پیکسلِ outline، پیکسلِ غیرپس‌زمینه) روی کل تصویر.
+     *  خواندن پیکسل‌ها با Bitmap.getPixels فریم‌ورک — پایدار و بدون ابهام
+     *  overload در کامپایلر CI (toPixelMap در آن محیط خطای کامپایل می‌داد). */
     private fun countPixels(bmp: ImageBitmap): Triple<Int, Int, Int> {
+        val androidBmp = bmp.asAndroidBitmap()
+        val w = androidBmp.width
+        val h = androidBmp.height
+        val px = IntArray(w * h)
+        androidBmp.getPixels(px, 0, w, 0, 0, w, h)
         var primary = 0
         var outline = 0
         var nonBg = 0
-        for (p in bmp.toPixelMap().pixels) {
+        for (p in px) {
             if (dist(p, bgArgb) > 40) nonBg++
             if (dist(p, primaryArgb) < 60) primary++
             if (dist(p, outlineArgb) < 60) outline++
