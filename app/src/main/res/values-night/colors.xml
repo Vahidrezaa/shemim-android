@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- پس‌زمینهٔ اسپلش/پنجره در حالت شب — هم‌رنگِ پس‌زمینهٔ تم تیرهٔ پیش‌فرض
+         (EmeraldDark.background در ShemimColorSchemes). بدون این فایل، MIUI اپ را
+         «فقط-روشن» تلقی می‌کند و در دارک‌مود سیستم، رندر را کم‌رنگ/شسته نمایش می‌داد
+         (گزارش دستگاهی ۱۴۰۵/۰۸/۲۳). -->
+    <color name="splash_background">#0F1512</color>
+</resources>

@@ -165,9 +165,13 @@ fun LoginScreen(
             Spacer(Modifier.height(24.dp))
 
             // ---------- دکمهٔ ورود ----------
+            // برخلاف گذشته، دکمه همیشه (تا پیش از ارسال در جریان) فعال است —
+            // همان رفتار وب: لمس با فرم خالی، خطای «الزامی» را نشان می‌دهد تا
+            // صفحه همیشه به لمس واکنش دیداری بدهد (گزارش دستگاهی ۱۴۰۵/۰۸/۲۳:
+            // دکمهٔ غیرفعال هیچ بازخوردی نمی‌داد و «فریز» حس می‌شد).
             Button(
                 onClick = { submit() },
-                enabled = state.canSubmit && username.isNotBlank() && password.isNotEmpty(),
+                enabled = state.canSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

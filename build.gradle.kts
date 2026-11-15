@@ -5,4 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    // WP-0.4 — پردازشگر حاشیه‌نویسی Room
+    alias(libs.plugins.ksp) apply false
 }
