@@ -7,6 +7,12 @@
              میانهٔ محوشدن» باقی نمی‌ماند (شاهد بصری لاگ گوشی واقعی: پنجره با
              آلفای ~۰.۱ رها شده بود) -->
         <item name="android:windowAnimationStyle">@null</item>
+        <!-- حالت تیره را خودِ اپ کامل مدیریت می‌کند (پالت‌های Compose +
+             windowBackground شب‌آگاه در values-night). از سیستم می‌خواهیم
+             رنگ‌ها را هرگز به‌اجبار تیره/وارونه نکند — «force dark» اندروید
+             ۱۰+ و MIUI روی اپ‌های تم‌روشن می‌تواند رنگ‌بندی را خراب و
+             کنترل‌ها را نامرئی کند. -->
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 
     <!--
@@ -19,5 +25,7 @@
     <style name="Theme.Shemim.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Shemim</item>
+        <!-- همان گارد Theme.Shemim — مسیر اسپلش هم از وارونگی سیستمی مصون باشد -->
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 </resources>

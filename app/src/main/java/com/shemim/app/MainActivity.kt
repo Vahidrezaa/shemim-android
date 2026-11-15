@@ -45,7 +45,20 @@ class MainActivity : ComponentActivity() {
         // اسپلشِ مدیریت‌شدهٔ رسمی — الزاماً قبل از super.onCreate.
         // هنداف اسپلش را از starting-window سیستمی (که لاگ MIUI نشان داد
         // کانال ورودی‌اش «کثیف» رها می‌شود) به مسیر کتابخانهٔ رسمی می‌برد.
-        installSplashScreen()
+        val splash = installSplashScreen()
+        // خروج بی‌انیمیشن اسپلش — رفع «پردهٔ سفید گیرکرده» روی MIUI:
+        // شواهد لاگ همین گوشی (پنجرهٔ رهاشده با آلفای ~۰.۱) نشان داد
+        // محوشدن سیستمیِ نمای اسپلش روی این دستگاه نیمه‌کاره می‌ماند و
+        // لایه‌ای تقریباً مات روی اپ می‌ماند: تیترِ درشت از زیرش سرِستی
+        // می‌شود ولی خطوط نازک فیلدها و دکمه محو می‌شوند و فقط موقع
+        // recomposition سنگین (لودینگِ «در حال بررسی…») لحظه‌ای پیدا
+        // می‌شوند. با remove() مستقیم، هیچ انیمیشن خروجی برای گیرکردن
+        // باقی نمی‌ماند. نقطهٔ عطف تشخیصی هم ثبت می‌شود تا در گزارش بعدی
+        // معلوم شود این مسیر واقعاً اجرا شده است.
+        splash.setOnExitAnimationListener { provider ->
+            FreezeDiagnostics.milestone("splash-view-removed")
+            provider.remove()
+        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         FreezeDiagnostics.milestone("activity-onCreate")
