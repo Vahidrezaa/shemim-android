@@ -1,86 +1,80 @@
 package com.shemim.app
 
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performTextInput
+import android.content.Context
+import android.content.Intent
+import android.os.Looper
+import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.shemim.core.datastore.SessionRepository
 import com.shemim.core.datastore.StoredUser
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * تست ران‌تایم کامل MainActivity روی JVM (Robolectric) — همان چرخهٔ
- * lifecycle/رندر/UI واقعی بدون گوشی. هر گیرِ composition، حلقهٔ بی‌نهایت
- * یا بلاکِ تردهای اصلی باید اینجا به‌صورت تایم‌اوت/کرش ظاهر شود.
+ * تست چرخهٔ MainActivity پس از بازنویسی اساسی — صفحهٔ ورود دیگر کامپوز
+ * نیست (LoginActivity با View)؛ این تست‌ها فقط دو مسیر باقی‌مانده را
+ * پوشش می‌دهند: نشست ذخیره‌شده → خانه (Active) و خروج → دست‌به‌دست‌ شدن
+ * به LoginActivity. همه بر پایهٔ ActivityScenario + نقاط عطف
+ * FreezeDiagnostics — بدون Compose rule.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
 class MainActivityLaunchTest {
 
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
-
-    private fun awaitLoginScreen() {
-        composeRule.waitUntil(timeoutMillis = 20_000) {
-            composeRule.onAllNodesWithText("ورود به حساب").fetchSemanticsNodes().isNotEmpty()
+    /** نشست ذخیره‌شده → مستقیم خانه (مسیر Active) بدون رفتن به ورود و بدون فریز. */
+    @Test
+    fun storedSession_showsHomeScreen_withoutFreezing() {
+        val app = ApplicationProvider.getApplicationContext<Context>()
+        runBlocking {
+            SessionRepository(app).save(StoredUser(id = "u1", username = "testuser"))
         }
-    }
-
-    /** باز شدن اپ → صفحهٔ ورود، بدون گیر کردن. */
-    @Test
-    fun launch_reachesLoginScreen_withoutFreezing() {
-        awaitLoginScreen()
-        composeRule.onNodeWithText("نام کاربری").assertExists()
-        composeRule.onNodeWithText("رمز عبور").assertExists()
-    }
-
-    /** فیلدها ورودی را می‌پذیرند و دکمهٔ ورود فعال می‌شود — یعنی UI زنده است. */
-    @Test
-    fun loginFields_acceptInput_andButtonEnables() {
-        awaitLoginScreen()
-        val fields = composeRule.onAllNodes(hasSetTextAction())
-        assertTrue("دو فیلد ورود پیدا نشد", fields.fetchSemanticsNodes().size >= 2)
-        fields[0].performTextInput("testuser")
-        fields[1].performTextInput("testpass")
-        composeRule.onNodeWithText("ورود").assertIsEnabled()
-    }
-
-    /** بازسازی اکتیویتی (مثل چرخش) → دوباره صفحهٔ ورود، بدون هنگ. */
-    @Test
-    fun activityRecreate_showsLoginAgain() {
-        awaitLoginScreen()
-        composeRule.activityRule.scenario.recreate()
-        awaitLoginScreen()
-    }
-
-    /** نشست ذخیره‌شده → خانهٔ موقت (مسیر Active) بدون کرش/فریز. */
-    @Test
-    fun storedSession_showsHomeScreen() {
-        awaitLoginScreen()
-        composeRule.activityRule.scenario.onActivity { activity ->
-            runBlocking {
-                SessionRepository(activity.applicationContext)
-                    .save(StoredUser(id = "u1", username = "testuser"))
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            val milestones = File(app.filesDir, "milestones.log")
+            var found = false
+            var attempts = 0
+            while (!found && attempts < 100) {
+                shadowOf(Looper.getMainLooper()).idle()
+                found = runCatching { milestones.readText() }
+                    .getOrDefault("")
+                    .contains("MILESTONE ui-home")
+                if (!found) Thread.sleep(20)
+                attempts++
             }
+            assertTrue("خانه پس از نشست ذخیره‌شده رندر نشد (ui-home ثبت نشد)", found)
         }
-        composeRule.waitUntil(timeoutMillis = 20_000) {
-            composeRule.onAllNodesWithText("خروج از حساب").fetchSemanticsNodes().isNotEmpty()
+    }
+
+    /** بدون نشست → دست‌به‌دست‌ شدن به LoginActivity (صفحهٔ ورود View-محور). */
+    @Test
+    fun loggedOut_handsOffToLoginActivity() {
+        val app = ApplicationProvider.getApplicationContext<Context>()
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            var started: Intent? = null
+            var attempts = 0
+            while (started == null && attempts < 50) {
+                shadowOf(Looper.getMainLooper()).idle()
+                started = shadowOf(app).nextStartedActivity
+                if (started == null) Thread.sleep(20)
+                attempts++
+            }
+            assertTrue("MainActivity در حالت خروج، LoginActivity را باز نکرد", started != null)
+            assertTrue(
+                "اکتیویتی باز‌شده LoginActivity نبود: ${started?.component}",
+                started?.component?.className == LoginActivity::class.java.name,
+            )
         }
     }
 
     /** عیب‌یابی بدون گزارش فریز/کرش: باید بی‌صدا و بی‌کرش no-op باشد. */
     @Test
     fun onAppForeground_isSafe_withoutReport() {
-        val ctx = androidx.test.core.app.ApplicationProvider
-            .getApplicationContext<android.content.Context>()
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
         FreezeDiagnostics.onAppForeground(ctx)
     }
 }
