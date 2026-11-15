@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- قاب پنجره قبل از رسم Compose — هم‌رنگ پس‌زمینهٔ آیکون تا اسپلش یکدست باشد -->
-    <style name="Theme.Shemim" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- tools:ignore="NewApi": forceDarkAllowed از API ۲۹ است؛ روی اندروید ۹
+         و قدیمی‌تر بی‌اثر و بی‌ضرر نادیده گرفته می‌شود (minSdk=24). -->
+    <style name="Theme.Shemim" parent="android:Theme.Material.Light.NoActionBar" tools:ignore="NewApi">
         <item name="android:windowBackground">@color/splash_background</item>
         <!-- بدون انیمیشن ورود/خروج پنجره — هیچ فریم میانی‌ای برای «گیرکردن در
              میانهٔ محوشدن» باقی نمی‌ماند (شاهد بصری لاگ گوشی واقعی: پنجره با
@@ -22,7 +24,7 @@
       کتابخانهٔ رسمی گوگل منتقل می‌کند. پس از آماده‌شدن اولین فریم اپ، تمِ
       اصلی (Theme.Shemim) اعمال می‌شود.
     -->
-    <style name="Theme.Shemim.Splash" parent="Theme.SplashScreen">
+    <style name="Theme.Shemim.Splash" parent="Theme.SplashScreen" tools:ignore="NewApi">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Shemim</item>
         <!-- همان گارد Theme.Shemim — مسیر اسپلش هم از وارونگی سیستمی مصون باشد -->

@@ -52,7 +52,14 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
-            all { test -> test.maxHeapSize = "2048m" }
+            all { test ->
+                test.maxHeapSize = "2048m"
+                // خروجی println تست‌ها (ماتریس DIAG عیب‌یابی پیکسلی ورود)
+                // در لاگ CI دیده شود — نه فقط در گزارش HTML محلی
+                test.testLogging {
+                    showStandardStreams = true
+                }
+            }
         }
     }
 

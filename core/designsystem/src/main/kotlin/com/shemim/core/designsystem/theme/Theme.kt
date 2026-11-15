@@ -10,26 +10,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * رنگ پویا (Material You) اجباراً خاموش است — گزارش گوشی واقعی
- * ۱۴۰۵/۰۸/۲۵: «فیلدها و دکمهٔ ورود نامرئی روی صفحهٔ سفید». پالت پویای
- * برخی بیلدهای MIUI رنگ‌های بدنه (primary/outline) را سفید/ته‌مایه
- * تحویل می‌دهد؛ نتیجه: هر کنترلی که از پیش‌فرض‌های M3 رنگ می‌گیرد
- * (فیلد، دکمه) روی پس‌زمینهٔ روشن نامرئی می‌شود، در حالی که متن‌های
- * با رنگ صریح (تیتر، برند) مرئی می‌مانند — دقیقاً همان علائم گزارش.
- * تا بررسی روی دستگاه واقعی، تنظیم ذخیره‌شدهٔ کاربر نادیده گرفته
- * می‌شود؛ با گارد بازرسی پالت در WP-1.7 (تنظیمات کامل نمایش) برمی‌گردد.
- */
-private const val DYNAMIC_COLOR_ENABLED = false
-
-/**
  * تم شمیم — WP-0.2 (جایگزین نسخهٔ موقتِ فاز صفر).
  *
  * - ۱۰ تم سایت با همان کلیدها؛ پالت روشن/تیرهٔ هر تم از الگوریتم رسمی متریال
  *   تولید و به‌صورت کد صریح در ShemimColorSchemes آمده (سند ۰۳ §۲).
  * - حالت تیره: دنبال سیستم + انتخاب دستی (سیستم/روشن/تیره).
  * - «مشکی و طلایی» طبق وب همیشه تیره می‌ماند.
- * - Dynamic Color (کاغذدیواری اندروید ۱۲+): موقتاً خاموشِ اجباری — پالت MIUI
- *   می‌تواند کنترل‌ها را نامرئی کند (بالای فایل)؛ در WP-1.7 با گارد بازمی‌گردد.
+ * - Dynamic Color (کاغذدیواری اندروید ۱۲+): پیش‌فرض خاموش (سند ۰۳)، انتخابی.
  */
 @Composable
 fun ShemimTheme(
@@ -46,7 +33,7 @@ fun ShemimTheme(
     } || themeKey.alwaysDark
 
     val colorScheme = when {
-        DYNAMIC_COLOR_ENABLED && dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
