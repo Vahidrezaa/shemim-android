@@ -83,6 +83,8 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:datastore"))
     implementation(project(":core:network"))
+    implementation(project(":core:db"))
+    implementation(project(":core:sync"))
     implementation(project(":feature:auth"))
 
     implementation(libs.androidx.core.ktx)
@@ -91,6 +93,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     // اسپلش مدیریت‌شدهٔ رسمی — هنداف اسپلش از starting-window سیستمی جدا می‌شود
     implementation(libs.androidx.core.splashscreen)
+    // ساخت Room.databaseBuilder در گراف اپ (WP-0.5) — runtime کافی است، compiler فقط در core:db
+    implementation(libs.androidx.room.runtime)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

@@ -99,6 +99,17 @@ interface MemberDao {
 
     @Query("SELECT COUNT(*) FROM member_transactions")
     suspend fun countTransactions(): Int
+
+    // مشاهده‌گرهای شمارنده — مصرف‌کنندهٔ مستقیم UI پیشخوان فاز ۰ (WP-0.5):
+    // داشبورد از همان Flowهای Room می‌خواند، نه شمارشِ لحظه‌ای در composition.
+    @Query("SELECT COUNT(*) FROM members")
+    fun observeMemberCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM member_transactions")
+    fun observeTransactionCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM loans")
+    fun observeLoanCount(): Flow<Int>
 }
 
 @Dao
@@ -234,4 +245,8 @@ interface SyncMetaDao {
 
     @Query("SELECT dataVersion FROM sync_meta WHERE id = 1")
     suspend fun currentVersion(): String?
+
+    /** مشاهده‌گر متادیتای سینک — SyncEngine وضعیت UI را از همین منبع حقیقت می‌سازد (WP-0.5). */
+    @Query("SELECT * FROM sync_meta WHERE id = 1")
+    fun observeMeta(): Flow<SyncMetaEntity?>
 }
