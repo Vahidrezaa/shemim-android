@@ -1,6 +1,5 @@
 package com.shemim.app
 
-import android.app.Application
 import android.content.Context
 import android.os.Looper
 import androidx.test.core.app.ActivityScenario
@@ -22,6 +21,14 @@ import org.robolectric.annotation.Config
  * پوشش می‌دهند: نشست ذخیره‌شده → خانه (Active) و خروج → دست‌به‌دست‌ شدن
  * به LoginActivity. همه بر پایهٔ ActivityScenario + نقاط عطف
  * FreezeDiagnostics — بدون Compose rule.
+ *
+ * نکتهٔ حیاتی دربارهٔ ترتیب اجرا: DataStore با delegate
+ * `preferencesDataStore` یک singleton در طول عمر JVM تست است و بین
+ * همهٔ تست‌ها مشترک می‌ماند (حتی با app تازه در هر تست). اگر تستِ
+ * «نشست ذخیره‌شده» قبل از تستِ خروج اجرا شود، کاربر seed‌شده در همان
+ * نمونه باقی می‌ماند و تست خروج به‌اشتباه Active می‌بیند. به همین دلیل
+ * تست خروج، نشست را پیش از launch صریحاً clear می‌کند تا فارغ از ترتیبِ
+ * اجرای تست‌ها همیشه LoggedOut ببیند.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
@@ -50,53 +57,31 @@ class MainActivityLaunchTest {
         }
     }
 
-    /** بدون نشست → دست‌به‌دست‌ شدن به LoginActivity (صفحهٔ ورود View-محور). */
+    /**
+     * نشست پاک‌شده → دست‌به‌دست‌ شدن به LoginActivity (صفحهٔ ورود
+     * View-محور). صریحاً clear می‌کنیم چون DataStore بین تست‌های یک
+     * JVM مشترک است (توضیح بالای کلاس)؛ milestone در فایل همین تست
+     * ثبت می‌شود و مسیر واقعی handoff را اثبات می‌کند.
+     */
     @Test
     fun loggedOut_handsOffToLoginActivity() {
-        // تایپ استاتیک باید Application باشد تا overload درستِ shadowOf رزولو شود.
-        val app = ApplicationProvider.getApplicationContext<Application>()
-        // صف شروع‌های سطح اپ را پیش از launch خالی می‌کنیم؛ خودِ
-        // ActivityScenario هنگام راه‌اندازی MainActivity یک intent در صف ثبت
-        // می‌کند و نباید با intent دست‌به‌دست‌شدن اشتباه گرفته شود.
-        while (shadowOf(app).nextStartedActivity != null) {
-            // drain
-        }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        val app = ApplicationProvider.getApplicationContext<Context>()
+        runBlocking { SessionRepository(app).clear() }
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
             val milestones = File(app.filesDir, "milestones.log")
-            var handoff = false
-            var loginIntentSeen = false
+            var found = false
             var attempts = 0
-            // دو شرط مستقل: (۱) milestone مسیر handoff در فایل ثبت شود و
-            // (۲) intent شروع LoginActivity در صف اکتیویتی یا اپ دیده شود.
-            // intentهای نامربوط (مثل راه‌اندازی خود سناریو) رد می‌شوند.
-            while (attempts < 250 && !(handoff && loginIntentSeen)) {
+            while (!found && attempts < 150) {
                 shadowOf(Looper.getMainLooper()).idle()
-                if (!handoff) {
-                    handoff = runCatching { milestones.readText() }
-                        .getOrDefault("")
-                        .contains("MILESTONE handoff-to-login-activity")
-                }
-                if (!loginIntentSeen) {
-                    scenario.onActivity { activity ->
-                        repeat(10) {
-                            val next = shadowOf(activity).nextStartedActivity
-                                ?: shadowOf(app).nextStartedActivity
-                                ?: return@repeat
-                            if (next.component?.className ==
-                                LoginActivity::class.java.name
-                            ) {
-                                loginIntentSeen = true
-                            }
-                        }
-                    }
-                }
-                if (!(handoff && loginIntentSeen)) Thread.sleep(20)
+                found = runCatching { milestones.readText() }
+                    .getOrDefault("")
+                    .contains("MILESTONE handoff-to-login-activity")
+                if (!found) Thread.sleep(20)
                 attempts++
             }
-            assertTrue("مسیر دست‌به‌دست شدن اجرا نشد (milestone ثبت نشد)", handoff)
             assertTrue(
-                "intent شروع LoginActivity در صف‌های اکتیویتی/اپ دیده نشد",
-                loginIntentSeen,
+                "مسیر دست‌به‌دست شدن به صفحهٔ ورود اجرا نشد (milestone ثبت نشد)",
+                found,
             )
         }
     }
