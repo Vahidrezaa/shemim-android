@@ -159,13 +159,16 @@ class SyncEngine(
                 if (!resp.success) {
                     return@withContext SyncResult.Failed("پاسخ loadData ناموفق بود", lastSynced)
                 }
-                if (resp.unchanged || resp.appData == null) {
+                // گرفتن در متغیر محلی: پراپرتیِ ماژول دیگر (core:model) قابل
+                // smart cast نیست — الگوی استاندارد null-check روی نسخهٔ محلی.
+                val fresh = resp.appData
+                if (resp.unchanged || fresh == null) {
                     // همان بهینه‌سازی وب: نسخه‌ها برابرند؛ فقط مُهر زمان نو شود
                     // تا «آخرین به‌روزرسانی» صادقانه رفرش لمس‌شده را نشان دهد.
                     touchMeta(resp.dataVersion.ifEmpty { since }, lastSynced)
                     SyncResult.Unchanged(resp.dataVersion.ifEmpty { since }, System.currentTimeMillis())
                 } else {
-                    applySnapshot(resp.appData.toSnapshot(resp.dataVersion))
+                    applySnapshot(fresh.toSnapshot(resp.dataVersion))
                     SyncResult.Synced(resp.dataVersion, System.currentTimeMillis())
                 }
             }
